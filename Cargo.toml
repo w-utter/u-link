@@ -1,0 +1,9 @@
+[package]
+name = "u-link"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+neli = "0.7"
+libc = "0.2"
+bytemuck = {version = "1.25", features = ["derive"]}
