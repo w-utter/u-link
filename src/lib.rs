@@ -14,7 +14,7 @@ pub struct NetworkItf<'a> {
 
 impl<'a> NetworkItf<'a> {
     pub fn from_bytes(buf: &'a [u8]) -> std::io::Result<Self> {
-        let raw = crate::packet::NetlinkItfPacket::from_bytes(buf).unwrap();
+        let raw = crate::packet::NetlinkItfPacket::from_bytes(buf)?;
         let mut name = None;
         let mut operstate = None;
 
@@ -27,10 +27,10 @@ impl<'a> NetworkItf<'a> {
             }
         }
         let (Some(name), Some(operstate)) = (name, operstate) else {
-            panic!();
+            return Err(std::io::Error::new(std::io::ErrorKind::NotFound, "could not find name and/or operstate"))
         };
 
-        let operstate = match *operstate.get(0).unwrap() as _ {
+        let operstate = match *operstate.get(0).ok_or(std::io::Error::new(std::io::ErrorKind::InvalidData, "could not get operstate value"))? as _ {
             libc::IF_OPER_UP => "up",
             libc::IF_OPER_DOWN => "down",
             libc::IF_OPER_DORMANT => "dormant",
@@ -38,7 +38,7 @@ impl<'a> NetworkItf<'a> {
             libc::IF_OPER_UNKNOWN => "unknown",
             libc::IF_OPER_LOWERLAYERDOWN => "lowerlayerdown",
             libc::IF_OPER_NOTPRESENT => "notpresent",
-            _ => todo!(),
+            _ => return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "unknown operstate value")),
         };
 
         let name = if name.ends_with(b"\0") {

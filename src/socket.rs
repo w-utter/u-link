@@ -14,7 +14,7 @@ impl Monitor<socket_state::Initializing> {
         let sock = NlSocket::new(NlFamily::Route)?;
 
         sock.add_mcast_membership(Groups::new_groups(&[libc::RTMGRP_LINK as _]))
-            .unwrap();
+            .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "could not register multicast membership `link` to netlink socket"))?;
 
         Ok(Self {
             socket: sock,

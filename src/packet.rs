@@ -25,18 +25,18 @@ impl core::fmt::Debug for NetlinkItfPacket<'_> {
 }
 
 impl<'a> NetlinkItfPacket<'a> {
-    pub fn from_bytes(buf: &'a [u8]) -> Option<Self> {
+    pub fn from_bytes(buf: &'a [u8]) -> std::io::Result<Self> {
         const HEADER_LEN: usize = core::mem::size_of::<NlMsgHdr>();
         const INFO_LEN: usize = core::mem::size_of::<IfInfoMsg>();
         if buf.len() < HEADER_LEN + INFO_LEN {
-            return None;
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "packet too small"));
         }
 
         let header = bytemuck::from_bytes::<NlMsgHdr>(&buf[..HEADER_LEN]);
 
         let info = bytemuck::from_bytes::<IfInfoMsg>(&buf[HEADER_LEN..HEADER_LEN + INFO_LEN]);
 
-        Some(Self {
+        Ok(Self {
             nl_header: header,
             info,
             payload: &buf[HEADER_LEN + INFO_LEN..],
